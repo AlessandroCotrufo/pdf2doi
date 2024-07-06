@@ -4,144 +4,119 @@ import tempfile
 import fitz
 from pathlib import Path
 import logging
+import os
+import pdf2doi.config as config
+
 
 logger = logging.getLogger("pdf2doi")
 
+default_config_params = {
+    "verbose": True,
+    "separator": os.path.sep,
+    "method_dxdoiorg": "application/citeproc+json",
+    "webvalidation": True,
+    "websearch": True,
+    "numb_results_google_search": 6,
+    "N_characters_in_pdf": 1000,
+    "save_identifier_metadata": True,
+    "replace_arxivID_by_DOI_when_available": True,
+}
 
-def test_read_pdf_info():
+config.update_params(default_config_params)
 
-    with tempfile.TemporaryDirectory() as tmpdirname:
-        pdf_path = Path(tmpdirname) / "foo.pdf"
+test_doi = r"10.1103/PhysRev.47.777"
+test_title = (
+    r"Can Quantum Mechanical Description of Physical Reality Be Considered Complete"
+)
 
-        doc = fitz.open()
-        doc.insert_page(-1, text="Lorem ipsum")
-        doc.save(pdf_path)
-        doc.close()
 
-        assert pdf_path.exists()
+@pytest.fixture
+def pdf_path(tmp_path):
+    # create your file manually here using the tmp_path fixture
+    # or just import a static pre-built mock file
+    # something like :
+    file_path = tmp_path / (test_title + ".pdf")
+    doc = fitz.open()
+    doc.insert_page(-1, text=(test_doi + " " + test_title))
+    doc.save(file_path)
+    doc.close()
+    return file_path
 
-        pdf2doi.finders.add_found_identifier_to_metadata(
-            target=str(pdf_path), identifier="test"
+
+def test_read_pdf_info(pdf_path):
+
+    assert pdf_path.exists()
+
+    pdf2doi.finders.add_found_identifier_to_metadata(
+        target=str(pdf_path), identifier="test"
+    )
+
+    with open(pdf_path, "rb") as f:
+        info = pdf2doi.finders.get_pdf_info(f)
+
+    assert info is not None
+
+
+def test_find_identifier_in_pdf_info(pdf_path):
+
+    assert pdf_path.exists()
+
+    pdf2doi.finders.add_found_identifier_to_metadata(
+        target=str(pdf_path), identifier=test_doi
+    )
+
+    with open(pdf_path, "rb") as f:
+        identifier, desc, info = pdf2doi.find_identifier_in_pdf_info(
+            f, func_validate=pdf2doi.finders.validate
         )
 
-        with open(pdf_path, "rb") as f:
-            info = pdf2doi.finders.get_pdf_info(f)
-
-        assert info is not None
+    assert identifier == test_doi.lower()
 
 
-def test_find_identifier_in_pdf_info():
+def test_find_identifier_in_pdf_text(pdf_path):
 
-    test_doi = "10.1103/PhysRev.47.777"
+    assert pdf_path.exists()
 
-    with tempfile.TemporaryDirectory() as tmpdirname:
-        pdf_path = Path(tmpdirname) / "foo.pdf"
-
-        doc = fitz.open()
-        doc.insert_page(-1, text="Lorem ipsum")
-        doc.save(pdf_path)
-        doc.close()
-
-        assert pdf_path.exists()
-
-        pdf2doi.finders.add_found_identifier_to_metadata(
-            target=str(pdf_path), identifier=test_doi
+    with open(pdf_path, "rb") as f:
+        identifier, desc, info = pdf2doi.find_identifier_in_pdf_text(
+            f, func_validate=pdf2doi.finders.validate
         )
 
-        with open(pdf_path, "rb") as f:
-            identifier, desc, info = pdf2doi.find_identifier_in_pdf_info(
-                f, func_validate=pdf2doi.finders.validate
-            )
+    assert identifier == test_doi.lower()
+
+
+def test_find_identifier_in_filename(pdf_path):
+
+    assert pdf_path.exists()
+
+    with open(pdf_path, "rb") as f:
+        identifier, desc, info = pdf2doi.find_identifier_in_pdf_text(
+            f, func_validate=pdf2doi.finders.validate
+        )
 
     assert identifier == test_doi.lower()
 
 
-def test_find_identifier_in_pdf_text():
-    test_doi = "10.1103/PhysRev.47.777"
+def test_find_identifier_by_googling_title(pdf_path):
 
-    with tempfile.TemporaryDirectory() as tmpdirname:
-        pdf_path = Path(tmpdirname) / "foo.pdf"
+    assert pdf_path.exists()
 
-        doc = fitz.open()
-        doc.insert_page(-1, text=test_doi)
-        doc.save(pdf_path)
-        doc.close()
-
-        assert pdf_path.exists()
-
-        with open(pdf_path, "rb") as f:
-            identifier, desc, info = pdf2doi.find_identifier_in_pdf_text(
-                f, func_validate=pdf2doi.finders.validate
-            )
+    with open(pdf_path, "rb") as f:
+        identifier, desc, info = pdf2doi.find_identifier_by_googling_title(
+            f, func_validate=pdf2doi.finders.validate
+        )
 
     assert identifier == test_doi.lower()
 
 
-def test_find_identifier_in_filename():
-    test_doi = "10.1103/PhysRev.47.777"
+def test_find_identifier_by_googling_first_N_characters_in_pdf(pdf_path):
 
-    with tempfile.TemporaryDirectory() as tmpdirname:
-        pdf_path = Path(tmpdirname) / "foo.pdf"
+    assert pdf_path.exists()
 
-        doc = fitz.open()
-        doc.insert_page(-1, text=test_doi)
-        doc.save(pdf_path)
-        doc.close()
-
-        assert pdf_path.exists()
-
-        with open(pdf_path, "rb") as f:
-            identifier, desc, info = pdf2doi.find_identifier_in_pdf_text(
-                f, func_validate=pdf2doi.finders.validate
-            )
-
-    assert identifier == test_doi.lower()
-
-
-def test_find_identifier_by_googling_title():
-    pdf_title = (
-        "Can Quantum Mechanical Description of Physical Reality Be Considered Complete"
-    )
-    test_doi = "10.1103/PhysRev.47.777"
-
-    with tempfile.TemporaryDirectory() as tmpdirname:
-        pdf_path = Path(tmpdirname) / pdf_title
-
-        doc = fitz.open()
-        doc.insert_page(-1, text="Lorem ipsum")
-        doc.save(pdf_path)
-        doc.close()
-
-        assert pdf_path.exists()
-
-        with open(pdf_path, "rb") as f:
-            identifier, desc, info = pdf2doi.find_identifier_by_googling_title(
-                f, func_validate=pdf2doi.finders.validate
-            )
-
-    assert identifier == test_doi.lower()
-
-
-def test_find_identifier_by_googling_first_N_characters_in_pdf():
-    pdf_text = (
-        "Can Quantum Mechanical Description of Physical Reality Be Considered Complete"
-    )
-    test_doi = "10.1103/PhysRev.47.777"
-
-    with tempfile.TemporaryDirectory() as tmpdirname:
-        pdf_path = Path(tmpdirname) / "foo.txt"
-
-        doc = fitz.open()
-        doc.insert_page(-1, text=pdf_text)
-        doc.save(pdf_path)
-        doc.close()
-
-        assert pdf_path.exists()
-
-        with open(pdf_path, "rb") as f:
-            identifier, desc, info = pdf2doi.find_identifier_by_googling_title(
-                f, func_validate=pdf2doi.finders.validate
-            )
+    with open(pdf_path, "rb") as f:
+        identifier, desc, info = pdf2doi.find_identifier_by_googling_title(
+            f, func_validate=pdf2doi.finders.validate
+        )
 
     assert identifier == test_doi.lower()
 
