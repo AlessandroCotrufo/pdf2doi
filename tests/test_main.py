@@ -42,10 +42,70 @@ def pdf_path(tmp_path):
     return file_path
 
 
+@pytest.fixture
+def dir_pdfs(tmp_path):
+    file_path = tmp_path / (test_title + "1.pdf")
+    doc = fitz.open()
+    doc.insert_page(-1, text=(test_doi + " " + test_title))
+    doc.save(file_path)
+    doc.close()
+
+    file_path = tmp_path / (test_title + "2.pdf")
+    doc = fitz.open()
+    doc.insert_page(-1, text=(test_doi + " " + test_title))
+    doc.save(file_path)
+    doc.close()
+
+    return tmp_path
+
+
 def test_execution_from_cli(pdf_path):
     cmd = f'pdf2doi "{str(pdf_path)}"'
     result = subprocess.run(shlex.split(cmd), check=True, capture_output=True)
+
     assert result.returncode == 0
+
     identifier_type, identifier, *_ = result.stdout.decode().split()
     assert identifier_type == test_identifier_type
     assert identifier == test_doi.lower()
+
+
+def test_optional_arguments(pdf_path):
+    cmd = f'pdf2doi -v "{str(pdf_path)}"'
+    result = subprocess.run(shlex.split(cmd), check=True, capture_output=True)
+
+    assert result.returncode == 0
+
+    identifier_type, identifier, *_ = result.stdout.decode().split()
+    assert identifier_type == test_identifier_type
+    assert identifier == test_doi.lower()
+
+    verbose = result.stderr.decode().split("\n")[:-1]
+
+    assert len(verbose)
+
+    are_all_messages_logs = True
+    for line in verbose:
+        if not line.startswith("[pdf2doi]"):
+            are_all_messages_logs = False
+    assert are_all_messages_logs
+
+
+def test_pdf2doi_singlefile(pdf_path):
+    result = pdf2doi.main.pdf2doi_singlefile(pdf_path)
+    assert isinstance(result, dict)
+    assert result["identifier"] == test_doi.lower()
+    assert result["identifier_type"] == test_identifier_type
+
+
+def test_pdf2doi_directory(dir_pdfs):
+    result = pdf2doi.main.pdf2doi(dir_pdfs)
+    assert isinstance(result, list)
+    assert len(result) == 2
+    are_all_results_dicts = True
+    for r in result:
+        if not isinstance(r, dict):
+            are_all_results_dicts = False
+    assert are_all_results_dicts
+    assert result[0]["identifier"] == test_doi.lower()
+    assert result[0]["identifier"] == test_doi.lower()
