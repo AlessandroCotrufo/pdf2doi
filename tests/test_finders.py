@@ -32,9 +32,6 @@ test_title = (
 
 @pytest.fixture
 def pdf_path(tmp_path):
-    # create your file manually here using the tmp_path fixture
-    # or just import a static pre-built mock file
-    # something like :
     file_path = tmp_path / (test_title + ".pdf")
     doc = fitz.open()
     doc.insert_page(-1, text=(test_doi + " " + test_title))
