@@ -111,8 +111,10 @@ def test_find_identifier_by_googling_first_N_characters_in_pdf(pdf_path):
     assert pdf_path.exists()
 
     with open(pdf_path, "rb") as f:
-        identifier, desc, info = pdf2doi.find_identifier_by_googling_title(
-            f, func_validate=pdf2doi.finders.validate
+        identifier, desc, info = (
+            pdf2doi.find_identifier_by_googling_first_N_characters_in_pdf(
+                f, func_validate=pdf2doi.finders.validate
+            )
         )
 
     assert identifier == test_doi.lower()
