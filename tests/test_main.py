@@ -7,6 +7,7 @@ import logging
 import os
 import pdf2doi.config as config
 import subprocess, shlex
+import pyperclip
 
 
 logger = logging.getLogger("pdf2doi")
@@ -109,3 +110,27 @@ def test_pdf2doi_directory(dir_pdfs):
     assert are_all_results_dicts
     assert result[0]["identifier"] == test_doi.lower()
     assert result[0]["identifier"] == test_doi.lower()
+
+
+def test_save_identifiers_to_file(dir_pdfs: Path):
+    destination_filename = "dois.txt"
+    cmd = f'pdf2doi -v "{str(dir_pdfs)}" -s {destination_filename}'
+    result = subprocess.run(shlex.split(cmd), check=True, capture_output=True)
+
+    assert dir_pdfs.joinpath(destination_filename).exists()
+
+
+def test_save_identifiers_to_clipboard(dir_pdfs: Path):
+    cmd = f'pdf2doi -v "{str(dir_pdfs)}" -clip'
+    result = subprocess.run(
+        shlex.split(cmd), check=True, capture_output=True, text=True
+    )
+    output = result.stdout.split("\n")[:-1]
+    dois = []
+    for line in output:
+        if line:
+            dois.append(line.split()[1])
+
+    clipboard = pyperclip.paste().split("\n")[:-1]
+
+    assert dois == clipboard
