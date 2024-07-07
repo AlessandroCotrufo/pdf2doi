@@ -1,0 +1,10 @@
+verbose = false
+separator = "\\"
+method_dxdoiorg = "application/citeproc+json"
+webvalidation = false
+websearch = false
+numb_results_google_search = 10
+N_characters_in_pdf = 100
+save_identifier_metadata = false
+replace_arxivID_by_DOI_when_available = false
+finders_methods = [ "document_infos", "document_text", "filename", "title_google", "first_N_characters_google",]
