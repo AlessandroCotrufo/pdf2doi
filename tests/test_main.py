@@ -26,7 +26,7 @@ default_config_params = {
 
 config.update_params(default_config_params)
 
-test_doi = r"10.1103/PhysRev.47.777"
+test_doi = r"10.1103/PhysRev.47.777".lower()
 test_identifier_type = "DOI"
 test_title = (
     r"Can Quantum Mechanical Description of Physical Reality Be Considered Complete"
@@ -35,7 +35,7 @@ test_title = (
 
 @pytest.fixture
 def pdf_path(tmp_path):
-    file_path = tmp_path / (test_title + ".pdf")
+    file_path = tmp_path / (test_doi.replace("/", r"%2F") + " " + test_title + ".pdf")
     doc = fitz.open()
     doc.insert_page(-1, text=(test_doi + " " + test_title))
     doc.save(file_path)
@@ -68,7 +68,7 @@ def test_execution_from_cli(pdf_path):
 
     identifier_type, identifier, *_ = result.stdout.decode().split()
     assert identifier_type == test_identifier_type
-    assert identifier == test_doi.lower()
+    assert identifier == test_doi
 
 
 def test_optional_arguments(pdf_path):
@@ -79,7 +79,7 @@ def test_optional_arguments(pdf_path):
 
     identifier_type, identifier, *_ = result.stdout.decode().split()
     assert identifier_type == test_identifier_type
-    assert identifier == test_doi.lower()
+    assert identifier == test_doi
 
     verbose = result.stderr.decode().split("\n")[:-1]
 
@@ -95,7 +95,7 @@ def test_optional_arguments(pdf_path):
 def test_pdf2doi_singlefile(pdf_path):
     result = pdf2doi.main.pdf2doi_singlefile(pdf_path)
     assert isinstance(result, dict)
-    assert result["identifier"] == test_doi.lower()
+    assert result["identifier"] == test_doi
     assert result["identifier_type"] == test_identifier_type
 
 
@@ -108,8 +108,8 @@ def test_pdf2doi_directory(dir_pdfs):
         if not isinstance(r, dict):
             are_all_results_dicts = False
     assert are_all_results_dicts
-    assert result[0]["identifier"] == test_doi.lower()
-    assert result[0]["identifier"] == test_doi.lower()
+    assert result[0]["identifier"] == test_doi
+    assert result[0]["identifier"] == test_doi
 
 
 def test_save_identifiers_to_file(dir_pdfs: Path):
