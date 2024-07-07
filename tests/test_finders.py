@@ -21,7 +21,7 @@ default_config_params = {
 
 config.update_params(default_config_params)
 
-valid_test_doi = r"10.1103/PhysRev.47.777"
+valid_test_doi = r"10.1103/PhysRev.47.777".lower()
 valid_test_title = (
     r"Can Quantum Mechanical Description of Physical Reality Be Considered Complete"
 )
@@ -31,9 +31,21 @@ valid_arxiv_id = r"arXiv:acc-phys/9601001"
 
 @pytest.fixture
 def valid_pdf_path(tmp_path):
-    file_path = tmp_path / (valid_test_title + ".pdf")
+    file_path = tmp_path / (
+        valid_test_doi.replace("/", r"%2F") + " " + valid_test_title + ".pdf"
+    )
     doc = fitz.open()
     doc.insert_page(-1, text=(valid_test_doi + " " + valid_test_title))
+    doc.save(file_path)
+    doc.close()
+    return file_path
+
+
+@pytest.fixture
+def wrong_pdf_path(tmp_path):
+    file_path = tmp_path / (wrong_test_doi + ".pdf")
+    doc = fitz.open()
+    doc.insert_page(-1, text=(wrong_test_doi))
     doc.save(file_path)
     doc.close()
     return file_path
@@ -74,7 +86,7 @@ def test_find_identifier_in_pdf_info(valid_pdf_path):
             f, func_validate=pdf2doi.finders.validate
         )
 
-    assert identifier == valid_test_doi.lower()
+    assert identifier == valid_test_doi
 
 
 def test_find_identifier_in_pdf_text(valid_pdf_path):
@@ -86,7 +98,19 @@ def test_find_identifier_in_pdf_text(valid_pdf_path):
             f, func_validate=pdf2doi.finders.validate
         )
 
-    assert identifier == valid_test_doi.lower()
+    assert identifier == valid_test_doi
+
+
+def test_find_identifier_in_pdf_text_fail(wrong_pdf_path):
+
+    assert wrong_pdf_path.exists()
+
+    with open(wrong_pdf_path, "rb") as f:
+        identifier, desc, info = pdf2doi.find_identifier_in_pdf_text(
+            f, func_validate=pdf2doi.finders.validate
+        )
+
+    assert identifier is None
 
 
 def test_find_identifier_in_filename(valid_pdf_path):
@@ -94,11 +118,23 @@ def test_find_identifier_in_filename(valid_pdf_path):
     assert valid_pdf_path.exists()
 
     with open(valid_pdf_path, "rb") as f:
-        identifier, desc, info = pdf2doi.find_identifier_in_pdf_text(
+        identifier, desc, info = pdf2doi.find_identifier_in_filename(
             f, func_validate=pdf2doi.finders.validate
         )
 
-    assert identifier == valid_test_doi.lower()
+    assert identifier == valid_test_doi
+
+
+def test_find_identifier_in_filename_fail(wrong_pdf_path):
+
+    assert wrong_pdf_path.exists()
+
+    with open(wrong_pdf_path, "rb") as f:
+        identifier, desc, info = pdf2doi.find_identifier_in_filename(
+            f, func_validate=pdf2doi.finders.validate
+        )
+
+    assert identifier is None
 
 
 def test_find_identifier_by_googling_title(valid_pdf_path):
@@ -110,7 +146,19 @@ def test_find_identifier_by_googling_title(valid_pdf_path):
             f, func_validate=pdf2doi.finders.validate
         )
 
-    assert identifier == valid_test_doi.lower()
+    assert identifier == valid_test_doi
+
+
+def test_find_identifier_by_googling_title_fail(wrong_pdf_path):
+
+    assert wrong_pdf_path.exists()
+
+    with open(wrong_pdf_path, "rb") as f:
+        identifier, desc, info = pdf2doi.find_identifier_by_googling_title(
+            f, func_validate=pdf2doi.finders.validate
+        )
+
+    assert identifier is None
 
 
 def test_find_identifier_by_googling_first_N_characters_in_pdf(valid_pdf_path):
@@ -124,7 +172,21 @@ def test_find_identifier_by_googling_first_N_characters_in_pdf(valid_pdf_path):
             )
         )
 
-    assert identifier == valid_test_doi.lower()
+    assert identifier == valid_test_doi
+
+
+def test_find_identifier_by_googling_first_N_characters_in_pdf_fail(wrong_pdf_path):
+
+    assert wrong_pdf_path.exists()
+
+    with open(wrong_pdf_path, "rb") as f:
+        identifier, desc, info = (
+            pdf2doi.find_identifier_by_googling_first_N_characters_in_pdf(
+                f, func_validate=pdf2doi.finders.validate
+            )
+        )
+
+    assert identifier is None
 
 
 if __name__ == "__main__":
