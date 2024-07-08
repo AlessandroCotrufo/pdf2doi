@@ -74,6 +74,8 @@ def validate_doi_web(doi,method=None):
         logger.error(r"Some error occured within the function validate_doi_web")
         logger.error(e)
         return -1
+    
+    return None
 
 def validate_arxivID_web(arxivID):
     """It queries export.arxiv.org for a certain arxiv ID, to check that it exists.

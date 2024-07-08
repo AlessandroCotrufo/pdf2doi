@@ -65,6 +65,26 @@ def test_validate_doi_web_with_valid_doi():
     r = pdf2doi.finders.validate_doi_web(valid_doi)
     assert isinstance(r, str)
 
+def test_validate_doi_web_with_valid_doi_and_forced_connection_error(mocker):
+
+    mock_get = mocker.patch('requests.get')
+    mock_response = mocker.Mock()
+    mock_response.status_code = 503
+    mock_get.return_value = mock_response
+
+    r = pdf2doi.finders.validate_doi_web(valid_doi)
+    assert r is None
+
+def test_validate_doi_web_with_valid_doi_and_forced_not_found(mocker):
+
+    mock_get = mocker.patch('requests.get')
+    mock_response = mocker.Mock()
+    mock_response.status_code = 503
+    mock_get.return_value = mock_response
+
+    r = pdf2doi.finders.validate_doi_web(valid_doi)
+    assert r is None
+
 
 def test_validate_doi_web_with_wrong_doi():
     r = pdf2doi.finders.validate_doi_web(wrong_doi)
