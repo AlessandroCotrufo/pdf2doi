@@ -1,9 +1,7 @@
 import pytest
 import pdf2doi
-import tempfile
 import fitz
 from pathlib import Path
-import logging
 import os
 import pdf2doi.config as config
 
