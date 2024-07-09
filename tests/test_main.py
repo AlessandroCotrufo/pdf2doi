@@ -1,14 +1,16 @@
-import pytest
-import pdf2doi
-import tempfile
-import fitz
-from pathlib import Path
 import logging
 import os
-import pdf2doi.config as config
-import subprocess, shlex
-import pyperclip
+import shlex
+import subprocess
+import tempfile
+from pathlib import Path
 
+import fitz
+import pyperclip
+import pytest
+
+import pdf2doi
+import pdf2doi.config as config
 
 logger = logging.getLogger("pdf2doi")
 

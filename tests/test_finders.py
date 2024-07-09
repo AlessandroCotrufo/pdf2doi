@@ -1,8 +1,10 @@
-import pytest
-import pdf2doi
-import fitz
-from pathlib import Path
 import os
+from pathlib import Path
+
+import fitz
+import pytest
+
+import pdf2doi
 import pdf2doi.config as config
 
 default_config_params = {
@@ -63,9 +65,10 @@ def test_validate_doi_web_with_valid_doi():
     r = pdf2doi.finders.validate_doi_web(valid_doi)
     assert isinstance(r, str)
 
+
 def test_validate_doi_web_with_valid_doi_and_forced_connection_error(mocker):
 
-    mock_get = mocker.patch('requests.get')
+    mock_get = mocker.patch("requests.get")
     mock_response = mocker.Mock()
     mock_response.status_code = 503
     mock_get.return_value = mock_response
@@ -73,9 +76,10 @@ def test_validate_doi_web_with_valid_doi_and_forced_connection_error(mocker):
     r = pdf2doi.finders.validate_doi_web(valid_doi)
     assert r is None
 
+
 def test_validate_doi_web_with_valid_doi_and_forced_not_found(mocker):
 
-    mock_get = mocker.patch('requests.get')
+    mock_get = mocker.patch("requests.get")
     mock_response = mocker.Mock()
     mock_response.status_code = 503
     mock_get.return_value = mock_response
@@ -152,9 +156,13 @@ def test_find_identifier_in_google_search_with_mock(mocker):
 
 def test_find_identifier_in_text():
     import string
+
     text = string.ascii_lowercase + valid_doi + string.ascii_uppercase
-    identifier, desc, validation = pdf2doi.finders.find_identifier_in_text(texts=[text], func_validate=pdf2doi.finders.validate)
+    identifier, desc, validation = pdf2doi.finders.find_identifier_in_text(
+        texts=[text], func_validate=pdf2doi.finders.validate
+    )
     assert identifier == valid_doi
+
 
 def test_add_and_get_pdf_info(path_to_pdf_with_valid_doi):
 

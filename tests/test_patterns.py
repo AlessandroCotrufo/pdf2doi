@@ -1,5 +1,7 @@
-import pytest
 import re
+
+import pytest
+
 from pdf2doi.patterns import doi_regexp, standardise_doi
 
 BASIC_DOIS = [

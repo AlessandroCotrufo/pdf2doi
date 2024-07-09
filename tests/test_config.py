@@ -1,6 +1,8 @@
-import pytest
-import pdf2doi
 import os
+
+import pytest
+
+import pdf2doi
 import pdf2doi.config as config
 
 default_config_params = {
